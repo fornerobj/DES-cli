@@ -100,19 +100,53 @@ fn permute(bits: u64, table: []const u8) u64 {
     return res;
 }
 
-fn generate_subkeys(key: u64) [16]u64 {
+fn rotate_left(comptime length: u6, bits: u64, rotations: u8) u64 {
+    var res = bits;
+    
+    var i: u8 = 0;
+    while(i < rotations) {
+        //get the left most digit
+        const msb = (bits >> length-1) & 1;
+        //left shift
+        res = res << 1; 
+        //mask off digits to the left of most significant
+        res = res & ((1<<length)-1);
+        //add msb to end of number
+        res |= msb;
+        i+=1;
+    }
 
+    return res;
 }
+
+// fn generate_subkeys(key: u64) [16]u64 {
+//
+// }
 
 test "test applyPermutation function" {
     const originalKey: u64 = 0x133457799BBCDFF1; // 00010011 00110100 01010111 01111001 10011011 10111100 11011111 11110001
     const expectedPermutedKey: u64 = 0xF0CCAAF556678F; // 1111000 0110011 0010101 0101111 0101010 1011001 1001111 0001111
 
     const permutedKey = permute(originalKey, &PC1);
-    std.debug.print("original: {b}\npermuted: {b}\nexpected: {b}\n", .{originalKey,permutedKey, expectedPermutedKey});
-    std.debug.print("permuted xor expected: {b}\n", .{permutedKey^expectedPermutedKey});
 
     // Compare the values
     try testing.expect(permutedKey == expectedPermutedKey);
+}
+
+test "test rotate left function" {
+    const original: u64 = 0b1000;
+    const rotated = rotate_left(4, original, 1);
+    const expected: u64 = 0b0001;
+    try testing.expect(rotated == expected); 
+
+    const original2: u64 = 0b1111000011001100101010101111;
+    const rotated2 = rotate_left(28, original2, 1);
+    const expected2: u64 = 0b1110000110011001010101011111;
+    try testing.expect(rotated2 == expected2); 
+
+    const original3: u64 = 0b1100001100110010101010111111;
+    const rotated3 = rotate_left(28, original3, 2);
+    const expected3: u64 = 0b0000110011001010101011111111;
+    try testing.expect(rotated3 == expected3); 
 }
 
