@@ -1,0 +1,81 @@
+const main = @import("main.zig");
+const testing = @import("std").testing;
+
+test "Encrypting a block" {
+    const M = 0b0000000100100011010001010110011110001001101010111100110111101111;
+    const key = 0b0001001100110100010101110111100110011011101111001101111111110001;
+    const Subkeys = main.generate_subkeys(key);
+    const C = main.encrypt_block(M, Subkeys);
+    const expected = 0x85E813540F0AB405;
+    try testing.expect(C == expected);
+}
+
+test "Testing feistel function" {
+    const R0: u64 = 0b11110000101010101111000010101010;
+    const Kn: u64 = 0b000110110000001011101111111111000111000001110010;
+    const f: u64 = 0b00100011010010101010100110111011;
+
+    try testing.expect(main.feistel(R0, Kn) == f);
+}
+
+test "test applyPermutation function" {
+    const originalKey: u64 = 0x133457799BBCDFF1; // 00010011 00110100 01010111 01111001 10011011 10111100 11011111 11110001
+    const expectedPermutedKey: u64 = 0xF0CCAAF556678F; // 1111000 0110011 0010101 0101111 0101010 1011001 1001111 0001111
+
+    const permutedKey = main.permute(originalKey, 64, &main.tables.PC1);
+
+    // Compare the values
+    try testing.expect(permutedKey == expectedPermutedKey);
+
+    const originalKey2: u64 = 0b11100001100110010101010111111010101011001100111100011110;
+    const expectedPermutedKey2: u64 = 0b000110110000001011101111111111000111000001110010;
+
+    const permutedKey2 = main.permute(originalKey2, 56, &main.tables.PC2);
+
+    // Compare the values
+    try testing.expect(permutedKey2 == expectedPermutedKey2);
+}
+
+test "test rotate left function" {
+    const original: u64 = 0b1000;
+    const rotated = main.rotate_left(4, original, 1);
+    const expected: u64 = 0b0001;
+    try testing.expect(rotated == expected);
+
+    const original2: u64 = 0b1111000011001100101010101111;
+    const rotated2 = main.rotate_left(28, original2, 1);
+    const expected2: u64 = 0b1110000110011001010101011111;
+    try testing.expect(rotated2 == expected2);
+
+    const original3: u64 = 0b1100001100110010101010111111;
+    const rotated3 = main.rotate_left(28, original3, 2);
+    const expected3: u64 = 0b0000110011001010101011111111;
+    try testing.expect(rotated3 == expected3);
+}
+
+const testKeys = [16]u64{
+    0b000110110000001011101111111111000111000001110010,
+    0b011110011010111011011001110110111100100111100101,
+    0b010101011111110010001010010000101100111110011001,
+    0b011100101010110111010110110110110011010100011101,
+    0b011111001110110000000111111010110101001110101000,
+    0b011000111010010100111110010100000111101100101111,
+    0b111011001000010010110111111101100001100010111100,
+    0b111101111000101000111010110000010011101111111011,
+    0b111000001101101111101011111011011110011110000001,
+    0b101100011111001101000111101110100100011001001111,
+    0b001000010101111111010011110111101101001110000110,
+    0b011101010111000111110101100101000110011111101001,
+    0b100101111100010111010001111110101011101001000001,
+    0b010111110100001110110111111100101110011100111010,
+    0b101111111001000110001101001111010011111100001010,
+    0b110010110011110110001011000011100001011111110101,
+};
+
+test "test subkey generation" {
+    const key: u64 = 0b11110000110011001010101011110101010101100110011110001111;
+    const subkeys = main.generate_subkeys(key);
+    for (subkeys, 1..) |item, i| {
+        try testing.expect(item == testKeys[i - 1]);
+    }
+}
