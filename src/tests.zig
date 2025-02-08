@@ -73,7 +73,7 @@ const testKeys = [16]u64{
 };
 
 test "test subkey generation" {
-    const key: u64 = 0b11110000110011001010101011110101010101100110011110001111;
+    const key: u64 = 0b0001001100110100010101110111100110011011101111001101111111110001;
     const subkeys = main.generate_subkeys(key);
     for (subkeys, 1..) |item, i| {
         try testing.expect(item == testKeys[i - 1]);

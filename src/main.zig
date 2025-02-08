@@ -62,7 +62,9 @@ pub fn rotate_left(comptime length: u6, bits: u64, rotations: u8) u64 {
     return res;
 }
 
-pub fn generate_subkeys(key: u64) [16]u64 {
+pub fn generate_subkeys(full_key: u64) [16]u64 {
+    //permute key down to 56 bits from 64
+    const key = permute(full_key, 64, &tables.PC1);
     //split key into two 28 bit halves
     var c: u64 = key >> 28;
     var d: u64 = key & 0x0000000FFFFFFF;
@@ -107,8 +109,6 @@ pub fn encrypt_block(data: u64, subkeys: [16]u64) u64 {
         L_prev = L;
         R_prev = R;
     }
-    std.debug.print("L16: {b}\n", .{L_prev});
-    std.debug.print("R16: {b}\n", .{R_prev});
     return permute((R << 32) | L, 64, &tables.IP_minus_one);
 }
 
