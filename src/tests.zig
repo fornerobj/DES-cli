@@ -1,23 +1,6 @@
 const main = @import("main.zig");
 const testing = @import("std").testing;
 
-test "Encrypting a block" {
-    const M = 0b0000000100100011010001010110011110001001101010111100110111101111;
-    const key = 0b0001001100110100010101110111100110011011101111001101111111110001;
-    const Subkeys = main.generate_subkeys(key);
-    const C = main.encrypt_block(M, Subkeys);
-    const expected = 0x85E813540F0AB405;
-    try testing.expect(C == expected);
-}
-
-test "Testing feistel function" {
-    const R0: u64 = 0b11110000101010101111000010101010;
-    const Kn: u64 = 0b000110110000001011101111111111000111000001110010;
-    const f: u64 = 0b00100011010010101010100110111011;
-
-    try testing.expect(main.feistel(R0, Kn) == f);
-}
-
 test "test applyPermutation function" {
     const originalKey: u64 = 0x133457799BBCDFF1; // 00010011 00110100 01010111 01111001 10011011 10111100 11011111 11110001
     const expectedPermutedKey: u64 = 0xF0CCAAF556678F; // 1111000 0110011 0010101 0101111 0101010 1011001 1001111 0001111
@@ -78,4 +61,30 @@ test "test subkey generation" {
     for (subkeys, 1..) |item, i| {
         try testing.expect(item == testKeys[i - 1]);
     }
+}
+
+test "Testing feistel function" {
+    const R0: u64 = 0b11110000101010101111000010101010;
+    const Kn: u64 = 0b000110110000001011101111111111000111000001110010;
+    const f: u64 = 0b00100011010010101010100110111011;
+
+    try testing.expect(main.feistel(R0, Kn) == f);
+}
+
+test "Encrypting a block" {
+    const M = 0b0000000100100011010001010110011110001001101010111100110111101111;
+    const key = 0b0001001100110100010101110111100110011011101111001101111111110001;
+    const Subkeys = main.generate_subkeys(key);
+    const C = main.encrypt_block(M, Subkeys);
+    const expected = 0x85E813540F0AB405;
+    try testing.expect(C == expected);
+}
+
+test "Decrypting a block" {
+    const C = 0x85E813540F0AB405;
+    const expected = 0b0000000100100011010001010110011110001001101010111100110111101111;
+    const key = 0b0001001100110100010101110111100110011011101111001101111111110001;
+    const Subkeys = main.generate_subkeys(key);
+    const M = main.decrypt_block(C, Subkeys);
+    try testing.expect(M == expected);
 }

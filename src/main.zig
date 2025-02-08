@@ -112,6 +112,26 @@ pub fn encrypt_block(data: u64, subkeys: [16]u64) u64 {
     return permute((R << 32) | L, 64, &tables.IP_minus_one);
 }
 
+pub fn decrypt_block(data: u64, subkeys: [16]u64) u64 {
+    //permute data with IP table
+    const permuted_data = permute(data, 64, &tables.IP);
+
+    //Split IP into two 32 bit halves
+    var L_prev = permuted_data >> 32;
+    var R_prev = permuted_data & 0x00000000FFFFFFFF;
+    var L: u64 = undefined;
+    var R: u64 = undefined;
+
+    var i: u8 = 1;
+    while (i <= 16) : (i += 1) {
+        L = R_prev;
+        R = L_prev ^ feistel(R_prev, subkeys[16 - i]);
+        L_prev = L;
+        R_prev = R;
+    }
+    return permute((R << 32) | L, 64, &tables.IP_minus_one);
+}
+
 pub fn feistel(R: u64, Kn: u64) u64 {
     const expanded: u64 = permute(R, 32, &tables.E);
     const e_xor_k = expanded ^ Kn;
